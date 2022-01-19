@@ -5,9 +5,10 @@ using ..QuantumIsing
 
 hxs = 0:0.1:1.5
 hsnew = 1.5:0.01:2
-hs = 10 .^ range(-2., stop=1/2, length=50);
+hs = 10 .^ range(-2., stop=0.5, length=100);
 hzs = 0.001:0.1:1.2;
 Ns = 2:2:15;
+
 p = plot();
 
 @time for N in Ns
@@ -25,18 +26,26 @@ end
 
 p
 
+
+
+p = plot(xlab="hz",ylab="dM/dhz");
 M1 = zeros(length(hs));
 M2 = zeros(length(hs));
 @time for (i,h) in enumerate(hs)
-    vals1, vecs1 = generate_eigs(N=16, hx=0.5, hz=h)
-    #vals2, vecs2 = generate_eigs(N=16, hx=h, hz=0.3)
+    vals1, vecs1 = generate_eigs(N=12, hx=0.5, hz=h, rotated=false)
+    #vals2, vecs2 = generate_eigs(N=12, hx=0.5, hz=h, rotated=true)
     groundstate1 = @view vecs1[:,1]
-    #groundstate2 = @view vecs2[:,1]
-    M1[i] = magnetization(groundstate1,z=false)
-    #M2[i] = magnetization(groundstate2)
+    #groundstate2 = @view vecs2[:,1] 
+    M1[i] = magnetization(groundstate1, z=false)
+    #M2[i] = magnetization(groundstate1, z=false, i=2)
     println(M1)
 end
-plot!(p, hs, M1, marker=:circle);
+
+h, deri = derivative(x=hs, y=M1)
+h2, deri2 = derivative(x=h, y=deri)
+plot!(p, h, deri, marker=:circle, label="1st order");
+plot!(p, h2, deri2, marker=:square, label="2nd order")
+#plot!(p, hs, M1, marker=:circle);
 #plot!(p, hs, M2, marker=:square);
 
 p

@@ -9,7 +9,7 @@ using Arpack
 using ..SpinBasis
 using ..Moperator
 
-export generate_eigs, magnetization, critical_line, staggered_magnetization
+export generate_eigs, magnetization, critical_line, staggered_magnetization, derivative
 
 """
 Generate the a base of the Hamiltonian in terms of the binary numbers 0 and 1.
@@ -31,6 +31,16 @@ function eigen_sparse_multi(x)
     return λ, ϕ
 end
 
+# Taking the derivative
+function derivative(;x=Array{Float64}(undef), y=Array{Float64}(undef), step=1)
+    @assert length(x) == length(y)
+    @assert step <= length(y)-1
+    X = [x[i] for i in 1:step:length(x)]
+    Y = [y[i] for i in 1:step:length(y)]
+    derivative = [(Y[i+1]-Y[i])/(X[i+1]-X[i]) for i in 1:1:length(X)-1]
+    return X[1:length(X)-1], derivative
+end
+        
 """
 This function will give us the eigenvalues and eigenvectors of the Quantum Ising
 model with N sites and external magnetic fields hx and hz. 
