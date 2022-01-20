@@ -9,7 +9,7 @@ using Arpack
 using ..SpinBasis
 using ..Moperator
 
-export generate_eigs, magnetization, critical_line, staggered_magnetization, derivative
+export generate_eigs, magnetization, critical_line, staggered_magnetization, derivative, correlation
 
 """
 Generate the a base of the Hamiltonian in terms of the binary numbers 0 and 1.
@@ -113,6 +113,24 @@ function generate_eigs(; N::Int, hx=1, hz=1, gstate=true, rotated=false)
     return λ, ϕ
 end
 
+# Calculate the correlation functions at site j with custmized steps
+function correlation(state; j::Int, step::Int, z=true)
+    N = Int(log2(length(state)))
+    @assert 0 < j <= N
+    @assert 0 <= step < N
+    @assert 0 < j + step <= N
+    corr = 0 # the output correlation
+    if z
+        corr = state' * moperator(Sz,j,N) * moperator(Sz,j+step,N) * state
+    else
+        corr = state' * moperator(Sx,j,N) * moperator(Sx,j+step,N) * state
+    end
+    
+    return corr
+end
+
+
+# This will reproduce the phase diagram w.r.t hz and hx.
 function critical_line(;N::Int, hx::Real, hz::Real, rotated=false)
     λ, ϕ = generate_eigs(N=N, hx=hx, hz=hz, gstate=false, rotated=rotated)
     c = collect(zip(sortperm(λ), λ[sortperm(λ)]))
