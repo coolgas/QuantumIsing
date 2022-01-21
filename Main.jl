@@ -6,11 +6,11 @@ using ..QuantumIsing
 figpath = "./figs";
 
 hxs = 0:0.1:1.5
-hsnew = 1.5:0.01:2
-hs = 10 .^ range(-2., stop=0.5, length=100);
+hsnew = 1.5:0.02:1.8
+hs = 1.5:0.01:1.7
+#hs = 10 .^ range(-1., stop=0.5, length=50);
 hzs = 0.001:0.1:1.2;
 Ns = 2:2:15;
-
 p = plot();
 
 @time for N in Ns
@@ -18,8 +18,8 @@ p = plot();
     for (i,h) in enumerate(hs)
         vals, vecs = generate_eigs(N=N, hx=0.5, hz=h)
         groundstate = @view vecs[:,1]
-        #M[i] = magnetization(groundstate)
-        M[i] = staggered_magnetization(groundstate)
+        M[i] = magnetization(groundstate)
+        #M[i] = staggered_magnetization(groundstate)
     end
     plot!(p, hs, M, marker=:circle, label="N = $N",
         xlab="h", ylab="M(h)")
@@ -28,12 +28,34 @@ end
 
 p
 
-vals, vecs = generate_eigs(N=14, hx=0.5, hz=1.5);
-groundstate = @view vecs[:,1];
-correlation(groundstate,j=2,step=2)
+corr = zeros(length(hs));
+@time for (i, h) in enumerate(hs)
+    vals, vecs = generate_eigs(N=14, hx=0.5, hz=h);
+    groundstate = @view vecs[:,1];
+    corr[i] = correlation(groundstate,j=2,step=2,z=false)
+    println(corr)
+end
+plot!(p, hs, corr, marker=:circle)
 
+p
 
-p = plot(xlab="hz",ylab="d^2Sx/dhz^2", xlim=(0.5, 2.5), ylim=(-2, 2));
+p = plot(xlab="hz", ylab="Sz");
+p1 = plot(xlab="hz", ylab="dSz/dhz");
+M = zeros(length(hs));
+for (i,h) in enumerate(hs)
+    vals, vecs = generate_eigs(N=14, hx=0.5, hz=h, rotated=false)
+    groundstate = @view vecs[:,1]
+    M[i] = magnetization(groundstate, z=true)
+    println(M)
+end
+#plot!(p, hs, M, marker=:circle)
+h, deri = derivative(x=hs, y=M);
+plot!(p1, h, deri, marker=:circle);
+
+p1
+
+p = plot(xlab="hz",ylab="dSz/dhz", ylim=(-0.25, 0.5));
+p1 = plot(xlab="hz", ylab="dSz/dhz");
 M1 = zeros(length(hs));
 M2 = zeros(length(hs));
 M3 = zeros(length(hs));
@@ -48,7 +70,7 @@ M4 = zeros(length(hs));
     groundstate3 = @view vecs3[:,1]
     groundstate4 = @view vecs4[:,1] 
     M1[i] = magnetization(groundstate1, z=false)
-    M2[i] = magnetization(groundstate2, z=false)
+    M2[i] = magnetization(groundstate2, z=true)
     M3[i] = magnetization(groundstate3, z=false)
     M4[i] = magnetization(groundstate4, z=false)
     print(M4)
@@ -62,15 +84,18 @@ h3, deri3 = derivative(x=hs, y=M3);
 h32, deri32 = derivative(x=h3, y=deri3);
 h4, deri4 = derivative(x=hs, y=M4);
 h42, deri42 = derivative(x=h4, y=deri4);
-#plot!(p, h, deri, marker=:circle, label="1st order");
-plot!(p, h12, deri12, marker=:circle, label="N=8");
-plot!(p, h22, deri22, marker=:circle, label="N=10");
-plot!(p, h32, deri32, marker=:circle, label="N=12");
-plot!(p, h42, deri42, marker=:circle, label="N=14");
+plot!(p, h4, deri4, marker=:circle, label="1st order");
+plot!(p1, h2, deri2, marker=:circle, label="1st order")
+#plot!(p, h12, deri12, marker=:circle, label="N=8");
+#plot!(p, h22, deri22, marker=:circle, label="N=10");
+#plot!(p, h32, deri32, marker=:circle, label="N=12");
+#plot!(p, h42, deri42, marker=:circle, label="N=14");
 #plot!(p, hs, M1, marker=:circle);
 #plot!(p, hs, M2, marker=:square);
 
 p
+
+p1
 
 savefig(p, "~/Desktop/Hamiltonian/figs/fig1.png")
 
