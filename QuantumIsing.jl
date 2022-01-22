@@ -235,5 +235,4 @@ function staggered_magnetization(state)
     return SM
 end
 
-
 end
