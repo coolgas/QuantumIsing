@@ -206,7 +206,7 @@ function magnetization(state; z=true, i=1)
             bstate = bit_rep(i-1, N)
             bstate_M = 0
             for spin in bstate
-                bstate_M += (state[i]^2 * (spin ? 1 : -1))/N
+                bstate_M += (state[i]^2 * (spin ? 1/2 : -1/2))/N
             end
             #@assert abs(bstate_M) <= 1
             M += abs(bstate_M)
