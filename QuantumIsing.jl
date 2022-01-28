@@ -3,13 +3,14 @@ include("./Moperator.jl")
 
 module QuantumIsing 
 
+using LinearAlgebra
 using ArnoldiMethod
 using SparseArrays
 using Arpack
 using ..SpinBasis
 using ..Moperator
 
-export generate_eigs, magnetization, critical_line, staggered_magnetization, derivative, correlation
+export generate_eigs, magnetization, critical_line, staggered_magnetization, derivative, correlation, reduced_density_matrix
 
 """
 Generate the a base of the Hamiltonian in terms of the binary numbers 0 and 1.
@@ -129,7 +130,6 @@ function correlation(state; j::Int, step::Int, z=true)
     return corr
 end
 
-
 # This will reproduce the phase diagram w.r.t hz and hx.
 function critical_line(;N::Int, hx::Real, hz::Real, rotated=false)
     λ, ϕ = generate_eigs(N=N, hx=hx, hz=hz, gstate=false, rotated=rotated)
@@ -233,6 +233,33 @@ function staggered_magnetization(state)
         SM += abs(bstate_SM)
     end
     return SM
+end
+
+"""
+This function will calculate the reduced_density_matrix by integrate 'int_rank' out
+of the density matrix contructed from the state. Noticed that this function only
+considers the bipartite system AB and only taking trace with respect to B.
+"""
+function reduced_density_matrix(;state::Array{T,1}, int_rank::Int) where T <: Number
+    N = length(state)
+    @assert N % 2 == 0
+    @assert int_rank % 2 == 0
+    @assert N % int_rank == 0
+
+    rd_rank = Int(N / int_rank) # the output rank.
+    d_mat = state * state' # constructing the density matrix.
+    
+    traces = Array{Float64}(undef, 1, rd_rank*rd_rank)
+    i = 1
+    for j in 1:int_rank:N
+        for k in 1:int_rank:N
+            traces[i] = tr(d_mat[j:j+int_rank-1, k:k+int_rank-1])
+            i += 1
+        end
+    end
+
+    rd_mat = reshape(traces,(rd_rank, rd_rank))
+    return rd_mat'
 end
 
 end
