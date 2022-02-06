@@ -50,18 +50,14 @@ function generate_eigs(; N::Int, hx=1, hz=1, gstate=true, rotated=false)
     Ho = spzeros(2^N, 2^N)
     # consider the rotated case first
     if rotated
-        for i ∈ 1:N
-            for j ∈ 1:N
-                if abs(i-j) == 1
-                    vz = 1
-                elseif abs(i-j) == N-1 # apply the PBC
-                    vz = 1
-                else
-                    vz = 0
-                end
-                Ho = Ho + vz * moperator(Sz′,i,N) * moperator(Sz′,j,N)
-            end
+        for i ∈ 1:N-1
+            vz = 1
+            Ho = Ho + vz * moperator(Sz′,i,N) * moperator(Sz′,i+1,N)
         end
+        
+        # Here consider the PBC
+        Ho = Ho + 1 * moperator(Sz′,N,N) * moperator(Sz′,1,N)
+
         # Below consider the transverse field
         Hx = spzeros(2^N, 2^N)
         for i ∈ 1:N
@@ -76,18 +72,13 @@ function generate_eigs(; N::Int, hx=1, hz=1, gstate=true, rotated=false)
 
     # Below considers the case of pair interaction within distance
     else
-        for i ∈ 1:N
-            for j ∈ 1:N
-                if abs(i-j) == 1
-                    vz = 1
-                elseif abs(i-j) == N-1 # apply the PBC
-                    vz = 1
-                else
-                    vz = 0
-                end
-                Ho = Ho + vz * moperator(Sz,i,N) * moperator(Sz,j,N)
-            end
+        for i ∈ 1:N-1
+            vz = 1
+            Ho = Ho + vz * moperator(Sz,i,N) * moperator(Sz,i+1,N)
         end
+
+        # Here consider the PBC
+        Ho = Ho + 1 * moperator(Sz,N,N) * moperator(Sz,1,N)
         
         # Below consider the transverse field
         Hx = spzeros(2^N, 2^N)
