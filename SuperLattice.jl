@@ -10,7 +10,7 @@ using Arpack
 using ..SpinBasis
 using ..Moperator
 
-export spectrum, global_ground_energy, generate_eigs
+export spectrum, global_ground_energy, generate_eigs, correlation
 
 function spectrum(;v1::Real=0, v2::Real=0, v3::Real=0, Ω::Real=0, k::Real=0)
     ϵ_k=(1/8)*sqrt(((v1+v2)*sin(k)+v3*sin(2*k))^2+(8*Ω+(v1+v2)*cos(k)+v3*cos(2k))^2)
@@ -100,6 +100,18 @@ function generate_eigs(; N::Int, hx::Real=1, hz::Real=1, l::Real=1, a::Real=1, C
     return λ, ϕ
 end
 
+"""
+This function will give us the correlation between two sites i and i+k.
+"""
+function correlation(;i::Int=1, k::Int=1, vec::Vector{Float64})
+    N = Int(log2(size(vec)[1]))
+    @assert N % 2 == 0 "N is not divisible by 2"
+    term1 = vec'*moperator(Sx,i,N)*moperator(Sx,i+k,N)*vec
+    term2 = vec'*moperator(Sx,i,N)*vec
+    term3 = vec'*moperator(Sx,i+k,N)*vec
+    return term1-term2*term3
+end
+    
 end
 
 
